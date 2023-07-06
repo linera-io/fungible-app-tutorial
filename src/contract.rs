@@ -8,7 +8,6 @@ use async_trait::async_trait;
 use fungible::{Account, Message, Operation};
 use linera_sdk::base::{Amount, Owner};
 use linera_sdk::{base::WithContractAbi, Contract, ContractRuntime, ViewStateStorage};
-use std::str::FromStr;
 use thiserror::Error;
 
 linera_sdk::contract!(FungibleTokenContract);
@@ -42,14 +41,14 @@ impl Contract for FungibleTokenContract {
 
     async fn initialize(
         &mut self,
-        _argument: Self::InitializationArgument,
+        argument: Self::InitializationArgument,
     ) -> Result<(), Self::Error> {
         // Validate that the application parameters were configured correctly.
         let _ = self.runtime.application_parameters();
 
         if let Some(owner) = self.runtime.authenticated_signer() {
             self.state_mut()
-                .initialize_accounts(owner, Amount::from_str("1_000_000").unwrap())
+                .initialize_accounts(owner, argument)
                 .await
         }
         Ok(())

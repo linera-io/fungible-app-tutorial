@@ -7,7 +7,7 @@ pub struct FungibleAbi;
 
 impl ContractAbi for FungibleAbi {
     type Parameters = ();
-    type InitializationArgument = ();
+    type InitializationArgument = Amount;
     type Operation = Operation;
     type Response = ();
 }
