@@ -46,20 +46,9 @@ impl Service for FungibleTokenService {
 }
 
 #[Object]
-<<<<<<< HEAD
 impl FungibleTokenService {
     async fn accounts(&self) -> &MapView<Owner, Amount> {
         &self.state.accounts
-=======
-impl MutationRoot {
-    async fn transfer(&self, owner: Owner, amount: Amount, target_account: Account) -> Vec<u8> {
-        bcs::to_bytes(&Operation::Transfer {
-            owner,
-            amount,
-            target_account,
-        })
-        .unwrap()
->>>>>>> e06dbff (Added initialisation arguments)
     }
 }
 

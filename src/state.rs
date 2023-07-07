@@ -26,7 +26,7 @@ impl FungibleToken {
     }
 
     pub async fn credit(&mut self, account: Owner, amount: Amount) {
-        log::info!("Crediting {} with {} tokens.", account, amount);
+        log::info!("Owner {} received {} tokens", account, amount);
         let mut balance = self.balance(&account).await;
         balance.saturating_add_assign(amount);
         self.accounts
@@ -39,7 +39,7 @@ impl FungibleToken {
         account: Owner,
         amount: Amount,
     ) -> Result<(), InsufficientBalanceError> {
-        log::info!("Debiting {} by {} tokens.", account, amount);
+        log::info!("Owner {} was debited {} tokens", account, amount);
         let mut balance = self.balance(&account).await;
         balance
             .try_sub_assign(amount)
