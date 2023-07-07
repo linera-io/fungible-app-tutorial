@@ -41,13 +41,13 @@ impl Contract for FungibleTokenContract {
 
     async fn initialize(
         &mut self,
-        argument: Self::InitializationArgument,
+        amount: Self::InitializationArgument,
     ) -> Result<(), Self::Error> {
         // Validate that the application parameters were configured correctly.
         let _ = self.runtime.application_parameters();
 
         if let Some(owner) = self.runtime.authenticated_signer() {
-            self.state_mut().initialize_accounts(owner, argument).await
+            self.state_mut().initialize_accounts(owner, amount).await
         }
         Ok(())
     }
