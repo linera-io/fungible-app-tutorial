@@ -19,11 +19,14 @@ serde = { version = "1.0.130", features = ["derive"] }
 serde_json = "1.0.93"
 thiserror = "1.0.38"
 
-
 [dev-dependencies]
 linera-sdk = { version = "0.10.0", features = ["test"] }
 webassembly-test = "0.1.0"
 
+[target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
+linera-sdk = { version = "0.10.0", features = ["test", "wasmer"] }
+tokio = { version = "1.25.0", features = ["macros", "rt-multi-thread"] }
+webassembly-test = "0.1.0"
 
 [[bin]]
 name = "fungible_contract"
