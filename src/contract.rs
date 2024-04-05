@@ -47,7 +47,7 @@ impl Contract for FungibleTokenContract {
         let _ = self.runtime.application_parameters();
 
         if let Some(owner) = self.runtime.authenticated_signer() {
-            self.state_mut().initialize_accounts(owner, amount).await
+            self.state.initialize_accounts(owner, amount).await;
         }
         Ok(())
     }
@@ -63,7 +63,7 @@ impl Contract for FungibleTokenContract {
                 target_account,
             } => {
                 self.check_account_authentication(owner)?;
-                self.state_mut().debit(owner, amount).await?;
+                self.state.debit(owner, amount).await?;
                 Ok(self
                     .finish_transfer_to_account(amount, target_account)
                     .await)
