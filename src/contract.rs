@@ -101,7 +101,7 @@ impl FungibleTokenContract {
             self.runtime
                 .prepare_message(message)
                 .with_authentication()
-                .send_to(account.chain_id)
+                .send_to(account.chain_id);
         }
     }
 }
