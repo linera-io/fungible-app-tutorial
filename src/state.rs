@@ -11,7 +11,7 @@ pub struct FungibleToken {
 #[allow(dead_code)]
 impl FungibleToken {
     pub async fn initialize_accounts(&mut self, account: Owner, amount: Amount) {
-        log::info!("Initialising {} with {} tokens.", account, amount);
+        log::info!("Initialising {owner} with {amount} tokens.");
         self.accounts
             .insert(&owner, amount)
             .expect("Error in insert statement")
@@ -26,7 +26,7 @@ impl FungibleToken {
     }
 
     pub async fn credit(&mut self, account: Owner, amount: Amount) {
-        log::info!("Owner {} received {} tokens", account, amount);
+        log::info!("Owner {account} received {amount} tokens");
         let mut balance = self.balance(&account).await;
         balance.saturating_add_assign(amount);
         self.accounts
@@ -39,7 +39,7 @@ impl FungibleToken {
         account: Owner,
         amount: Amount,
     ) -> Result<(), InsufficientBalanceError> {
-        log::info!("Owner {} was debited {} tokens", account, amount);
+        log::info!("Owner {account} was debited {amount} tokens");
         let mut balance = self.balance(&account).await;
         balance
             .try_sub_assign(amount)
