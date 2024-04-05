@@ -122,9 +122,6 @@ pub enum Error {
 
     #[error("Insufficient Balance")]
     InsufficientBalance(#[from] InsufficientBalanceError),
-
-    #[error("Sessions not supported")]
-    SessionsNotSupported,
 }
 
 #[cfg(test)]
