@@ -10,8 +10,8 @@ pub struct FungibleToken {
 
 #[allow(dead_code)]
 impl FungibleToken {
-    pub async fn initialize_accounts(&mut self, owner: Owner, amount: Amount) {
-        log::info!("Initialising {} with {} tokens.", owner, amount);
+    pub async fn initialize_accounts(&mut self, account: Owner, amount: Amount) {
+        log::info!("Initialising {} with {} tokens.", account, amount);
         self.accounts
             .insert(&owner, amount)
             .expect("Error in insert statement")
