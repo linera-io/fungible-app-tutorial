@@ -64,9 +64,9 @@ impl Contract for FungibleTokenContract {
             } => {
                 self.check_account_authentication(owner)?;
                 self.state.debit(owner, amount).await?;
-                Ok(self
-                    .finish_transfer_to_account(amount, target_account)
-                    .await)
+                self.finish_transfer_to_account(amount, target_account)
+                    .await;
+                Ok(())
             }
         }
     }
