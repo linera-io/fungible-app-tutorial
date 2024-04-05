@@ -52,5 +52,5 @@ impl FungibleToken {
 }
 
 #[derive(Clone, Copy, Debug, Error)]
-#[error("Insufficient balance error")]
+#[error("Insufficient balance for transfer")]
 pub struct InsufficientBalanceError;
