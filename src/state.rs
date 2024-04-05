@@ -14,7 +14,7 @@ impl FungibleToken {
         log::info!("Initialising {} with {} tokens.", owner, amount);
         self.accounts
             .insert(&owner, amount)
-            .expect("Error in insert statemet")
+            .expect("Error in insert statement")
     }
 
     pub async fn balance(&self, account: &Owner) -> Amount {
