@@ -81,7 +81,6 @@ impl Contract for FungibleTokenContract {
     }
 }
 
-#[allow(dead_code)]
 impl FungibleTokenContract {
     fn check_account_authentication(&mut self, owner: Owner) -> Result<(), Error> {
         if self.runtime.authenticated_signer() == Some(owner) {
