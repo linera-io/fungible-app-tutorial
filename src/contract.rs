@@ -132,9 +132,7 @@ pub enum Error {
 pub mod tests {
     use super::*;
     use futures::FutureExt;
-    use linera_sdk::base::{BlockHeight, ChainId};
     use linera_sdk::views::{View, ViewStorageContext};
-    use linera_sdk::Contract;
     use std::str::FromStr;
 
     use webassembly_test::webassembly_test;
