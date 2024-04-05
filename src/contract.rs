@@ -62,7 +62,7 @@ impl Contract for FungibleTokenContract {
                 amount,
                 target_account,
             } => {
-                Self::check_account_authentication(self.runtime.authenticated_signer(), owner)?;
+                self.check_account_authentication(owner)?;
                 self.state_mut().debit(owner, amount).await?;
                 Ok(self
                     .finish_transfer_to_account(amount, target_account)
@@ -83,14 +83,12 @@ impl Contract for FungibleTokenContract {
 
 #[allow(dead_code)]
 impl FungibleTokenContract {
-    fn check_account_authentication(
-        authenticated_signed: Option<Owner>,
-        owner: Owner,
-    ) -> Result<(), Error> {
-        if authenticated_signed == Some(owner) {
-            return Ok(());
+    fn check_account_authentication(&mut self, owner: Owner) -> Result<(), Error> {
+        if self.runtime.authenticated_signer() == Some(owner) {
+            Ok(())
+        } else {
+            Err(Error::IncorrectAuthentication)
         }
-        Err(Error::IncorrectAuthentication)
     }
 
     async fn finish_transfer_to_account(&mut self, amount: Amount, account: Account) {
