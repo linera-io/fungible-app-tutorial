@@ -22,7 +22,7 @@ impl FungibleToken {
             .get(account)
             .await
             .expect("Failure in retrieval")
-            .unwrap_or_default()
+            .unwrap_or(Amount::ZERO)
     }
 
     pub async fn credit(&mut self, account: Owner, amount: Amount) {
