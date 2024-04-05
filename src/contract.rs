@@ -118,7 +118,7 @@ pub enum Error {
     JsonError(#[from] serde_json::Error),
 
     #[error("Incorrect Authentication")]
-    IncorrectAuthentication, // Add more error variants here.
+    IncorrectAuthentication,
 
     #[error("Insufficient Balance")]
     InsufficientBalance(#[from] InsufficientBalanceError),
