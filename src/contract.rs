@@ -47,7 +47,7 @@ impl Contract for FungibleTokenContract {
         let _ = self.runtime.application_parameters();
 
         if let Some(owner) = self.runtime.authenticated_signer() {
-            self.state_mut().initialize_accounts(owner, amount).await
+            self.state.initialize_accounts(owner, amount).await;
         }
         Ok(())
     }
@@ -62,11 +62,11 @@ impl Contract for FungibleTokenContract {
                 amount,
                 target_account,
             } => {
-                Self::check_account_authentication(self.runtime.authenticated_signer(), owner)?;
-                self.state_mut().debit(owner, amount).await?;
-                Ok(self
-                    .finish_transfer_to_account(amount, target_account)
-                    .await)
+                self.check_account_authentication(owner)?;
+                self.state.debit(owner, amount).await?;
+                self.finish_transfer_to_account(amount, target_account)
+                    .await;
+                Ok(())
             }
         }
     }
@@ -81,16 +81,13 @@ impl Contract for FungibleTokenContract {
     }
 }
 
-#[allow(dead_code)]
 impl FungibleTokenContract {
-    fn check_account_authentication(
-        authenticated_signed: Option<Owner>,
-        owner: Owner,
-    ) -> Result<(), Error> {
-        if authenticated_signed == Some(owner) {
-            return Ok(());
+    fn check_account_authentication(&mut self, owner: Owner) -> Result<(), Error> {
+        if self.runtime.authenticated_signer() == Some(owner) {
+            Ok(())
+        } else {
+            Err(Error::IncorrectAuthentication)
         }
-        Err(Error::IncorrectAuthentication)
     }
 
     async fn finish_transfer_to_account(&mut self, amount: Amount, account: Account) {
@@ -104,7 +101,7 @@ impl FungibleTokenContract {
             self.runtime
                 .prepare_message(message)
                 .with_authentication()
-                .send_to(account.chain_id)
+                .send_to(account.chain_id);
         }
     }
 }
@@ -121,13 +118,10 @@ pub enum Error {
     JsonError(#[from] serde_json::Error),
 
     #[error("Incorrect Authentication")]
-    IncorrectAuthentication, // Add more error variants here.
+    IncorrectAuthentication,
 
     #[error("Insufficient Balance")]
     InsufficientBalance(#[from] InsufficientBalanceError),
-
-    #[error("Sessions not supported")]
-    SessionsNotSupported,
 }
 
 #[cfg(test)]
@@ -135,9 +129,7 @@ pub enum Error {
 pub mod tests {
     use super::*;
     use futures::FutureExt;
-    use linera_sdk::base::{BlockHeight, ChainId};
     use linera_sdk::views::{View, ViewStorageContext};
-    use linera_sdk::Contract;
     use std::str::FromStr;
 
     use webassembly_test::webassembly_test;
