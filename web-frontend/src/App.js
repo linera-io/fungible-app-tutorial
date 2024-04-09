@@ -8,7 +8,7 @@ import {
 import tw from "tailwind-styled-components";
 
 const GET_BALANCE = gql`
-  query Accounts($owner: AccountOwner) {
+  query Accounts($owner: Owner) {
     accounts {
       entry(key: $owner) {
         value
@@ -17,14 +17,8 @@ const GET_BALANCE = gql`
   }
 `;
 
-const GET_TICKER_SYMBOL = gql`
-  query TickerSymbol {
-    tickerSymbol
-  }
-`;
-
 const MAKE_PAYMENT = gql`
-  mutation Transfer($owner: AccountOwner, $amount: Amount, $targetAccount: Account) {
+  mutation Transfer($owner: Owner, $amount: Amount, $targetAccount: Account) {
     transfer(owner: $owner, amount: $amount, targetAccount: $targetAccount)
   }
 `;
@@ -71,7 +65,7 @@ function App({ chainId, owner }) {
     { data: balanceData, called: balanceCalled, error: balanceError },
   ] = useLazyQuery(GET_BALANCE, {
     fetchPolicy: "network-only",
-    variables: { owner: `User:${owner}` },
+    variables: { owner: `${owner}` },
   });
   const [makePayment, { loading: paymentLoading }] = useMutation(MAKE_PAYMENT, {
     onError: (error) => setError("Error: " + error.networkError.result),
@@ -103,24 +97,15 @@ function App({ chainId, owner }) {
     setTargetChain(event.target.value);
   };
 
-  let [
-    tickerSymbolQuery,
-    { data: tickerSymbolData, called: tickerSymbolCalled, error: tickerSymbolError },
-  ] = useLazyQuery(GET_TICKER_SYMBOL, { fetchPolicy: "network-only" });
-
-  if (!tickerSymbolCalled) {
-    void tickerSymbolQuery();
-  }
-
   const handleSubmit = (event) => {
     event.preventDefault();
     makePayment({
       variables: {
-        owner: `User:${owner}`,
+        owner: `${owner}`,
         amount,
         targetAccount: {
           chainId: targetChain,
-          owner: `User:${recipient}`,
+          owner: `${recipient}`,
         },
       },
     }).then(r => console.log("payment made: " + r));
@@ -138,16 +123,12 @@ function App({ chainId, owner }) {
         {balanceData ? (
           <p className="text-3xl font-bold">
             {parseInt(balanceData.accounts.entry.value ?? '0').toLocaleString()}
-            {tickerSymbolData && ' ' + tickerSymbolData.tickerSymbol}
           </p>
         ) : (
           <p>Loading...</p>
         )}
         {balanceError && (
           <ErrorMessage>Failed to pull balance. Re-trying...</ErrorMessage>
-        )}
-        {tickerSymbolError && (
-          <ErrorMessage>Failed to read ticker symbol. Re-trying...</ErrorMessage>
         )}
       </Card>
 
