@@ -17,7 +17,7 @@ export PATH="$PWD/../linera-protocol/target/debug:$PATH"
 source /dev/stdin <<<"$(linera net helper 2>/dev/null)"
 ```
 
-You may also use `cargo install linera-service` and append the output of
+You may also use `cargo install linera-service@0.10.1` and append the output of
 `linera net helper` to your `~/.bash_profile`.
 
 Now, we are ready to set up a local network with an initial wallet owning several initial
