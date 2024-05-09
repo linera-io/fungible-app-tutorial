@@ -5,10 +5,12 @@ mod state;
 use self::state::FungibleToken;
 use async_graphql::{EmptySubscription, Object, Request, Response, Schema};
 use fungible::Operation;
-use linera_sdk::base::{Amount, Owner};
-use linera_sdk::graphql::GraphQLMutationRoot;
-use linera_sdk::views::MapView;
-use linera_sdk::{base::WithServiceAbi, Service, ServiceRuntime, ViewStateStorage};
+use linera_sdk::{
+    base::{Amount, Owner, WithServiceAbi},
+    graphql::GraphQLMutationRoot,
+    views::MapView,
+    Service, ServiceRuntime, ViewStateStorage,
+};
 use std::sync::{Arc, Mutex};
 use thiserror::Error;
 

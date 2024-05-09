@@ -6,8 +6,10 @@ use self::state::FungibleToken;
 use crate::state::InsufficientBalanceError;
 use async_trait::async_trait;
 use fungible::{Account, Message, Operation};
-use linera_sdk::base::{Amount, Owner};
-use linera_sdk::{base::WithContractAbi, Contract, ContractRuntime, ViewStateStorage};
+use linera_sdk::{
+    base::{Amount, Owner, WithContractAbi},
+    Contract, ContractRuntime, ViewStateStorage,
+};
 use thiserror::Error;
 
 linera_sdk::contract!(FungibleTokenContract);
