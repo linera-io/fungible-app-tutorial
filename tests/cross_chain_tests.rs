@@ -15,7 +15,7 @@ async fn test_cross_chain_transfer() {
     let sender_account = Owner::from(sender_chain.public_key());
 
     let application_id = sender_chain
-        .create_application::<fungible::FungibleAbi>(bytecode_id, (), initial_amount, vec![])
+        .create_application::<fungible::FungibleAbi, _, _>(bytecode_id, (), initial_amount, vec![])
         .await;
 
     let receiver_chain = validator.new_chain().await;
