@@ -35,7 +35,7 @@ impl Contract for FungibleTokenContract {
 
     async fn instantiate(&mut self, amount: Self::InstantiationArgument) {
         // Validate that the application parameters were configured correctly.
-        let _ = self.runtime.application_parameters();
+        let () = self.runtime.application_parameters();
 
         if let Some(owner) = self.runtime.authenticated_signer() {
             self.state.initialize_accounts(owner, amount).await;
