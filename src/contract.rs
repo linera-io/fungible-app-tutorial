@@ -4,7 +4,6 @@ mod state;
 
 use self::state::FungibleToken;
 use crate::state::InsufficientBalanceError;
-use async_trait::async_trait;
 use fungible::{Account, Message, Operation};
 use linera_sdk::{
     base::{Amount, Owner, WithContractAbi},
@@ -23,7 +22,6 @@ pub struct FungibleTokenContract {
     runtime: ContractRuntime<Self>,
 }
 
-#[async_trait]
 impl Contract for FungibleTokenContract {
     type Error = Error;
     type Storage = ViewStateStorage<Self>;
