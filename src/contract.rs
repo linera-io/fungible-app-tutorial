@@ -3,13 +3,11 @@
 mod state;
 
 use self::state::FungibleToken;
-use crate::state::InsufficientBalanceError;
 use fungible::{Account, Message, Operation};
 use linera_sdk::{
     base::{Amount, Owner, WithContractAbi},
     Contract, ContractRuntime, ViewStateStorage,
 };
-use thiserror::Error;
 
 linera_sdk::contract!(FungibleTokenContract);
 
@@ -23,73 +21,58 @@ pub struct FungibleTokenContract {
 }
 
 impl Contract for FungibleTokenContract {
-    type Error = Error;
     type Storage = ViewStateStorage<Self>;
     type State = FungibleToken;
     type Parameters = ();
     type InitializationArgument = Amount;
     type Message = Message;
 
-    async fn new(
-        state: FungibleToken,
-        runtime: ContractRuntime<Self>,
-    ) -> Result<Self, Self::Error> {
-        Ok(FungibleTokenContract { state, runtime })
+    async fn new(state: FungibleToken, runtime: ContractRuntime<Self>) -> Self {
+        FungibleTokenContract { state, runtime }
     }
 
     fn state_mut(&mut self) -> &mut Self::State {
         &mut self.state
     }
 
-    async fn initialize(
-        &mut self,
-        amount: Self::InitializationArgument,
-    ) -> Result<(), Self::Error> {
+    async fn initialize(&mut self, amount: Self::InitializationArgument) {
         // Validate that the application parameters were configured correctly.
         let _ = self.runtime.application_parameters();
 
         if let Some(owner) = self.runtime.authenticated_signer() {
             self.state.initialize_accounts(owner, amount).await;
         }
-        Ok(())
     }
 
-    async fn execute_operation(
-        &mut self,
-        operation: Self::Operation,
-    ) -> Result<Self::Response, Self::Error> {
+    async fn execute_operation(&mut self, operation: Self::Operation) -> Self::Response {
         match operation {
             Operation::Transfer {
                 owner,
                 amount,
                 target_account,
             } => {
-                self.check_account_authentication(owner)?;
-                self.state.debit(owner, amount).await?;
+                self.check_account_authentication(owner);
+                self.state.debit(owner, amount).await;
                 self.finish_transfer_to_account(amount, target_account)
                     .await;
-                Ok(())
             }
         }
     }
 
-    async fn execute_message(&mut self, message: Message) -> Result<(), Self::Error> {
+    async fn execute_message(&mut self, message: Message) {
         match message {
-            Message::Credit { amount, owner } => {
-                self.state.credit(owner, amount).await;
-                Ok(())
-            }
+            Message::Credit { amount, owner } => self.state.credit(owner, amount).await,
         }
     }
 }
 
 impl FungibleTokenContract {
-    fn check_account_authentication(&mut self, owner: Owner) -> Result<(), Error> {
-        if self.runtime.authenticated_signer() == Some(owner) {
-            Ok(())
-        } else {
-            Err(Error::IncorrectAuthentication)
-        }
+    fn check_account_authentication(&mut self, owner: Owner) {
+        assert_eq!(
+            self.runtime.authenticated_signer(),
+            Some(owner),
+            "Incorrect authentication"
+        );
     }
 
     async fn finish_transfer_to_account(&mut self, amount: Amount, account: Account) {
@@ -106,24 +89,6 @@ impl FungibleTokenContract {
                 .send_to(account.chain_id);
         }
     }
-}
-
-/// An error that can occur during the contract execution.
-#[derive(Debug, Error)]
-pub enum Error {
-    /// Failed to deserialize BCS bytes
-    #[error("Failed to deserialize BCS bytes")]
-    BcsError(#[from] bcs::Error),
-
-    /// Failed to deserialize JSON string
-    #[error("Failed to deserialize JSON string")]
-    JsonError(#[from] serde_json::Error),
-
-    #[error("Incorrect Authentication")]
-    IncorrectAuthentication,
-
-    #[error("Insufficient Balance")]
-    InsufficientBalance(#[from] InsufficientBalanceError),
 }
 
 #[cfg(test)]

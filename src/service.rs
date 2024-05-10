@@ -12,7 +12,6 @@ use linera_sdk::{
     Service, ServiceRuntime, ViewStateStorage,
 };
 use std::sync::{Arc, Mutex};
-use thiserror::Error;
 
 #[derive(Clone)]
 pub struct FungibleTokenService {
@@ -28,23 +27,21 @@ impl WithServiceAbi for FungibleTokenService {
 }
 
 impl Service for FungibleTokenService {
-    type Error = ServiceError;
     type Storage = ViewStateStorage<Self>;
     type State = FungibleToken;
     type Parameters = ();
 
-    async fn new(state: Self::State, runtime: ServiceRuntime<Self>) -> Result<Self, Self::Error> {
-        Ok(FungibleTokenService {
+    async fn new(state: Self::State, runtime: ServiceRuntime<Self>) -> Self {
+        FungibleTokenService {
             state: Arc::new(state),
             runtime: Arc::new(Mutex::new(runtime)),
-        })
+        }
     }
 
-    async fn handle_query(&self, request: Request) -> Result<Response, Self::Error> {
+    async fn handle_query(&self, request: Request) -> Response {
         let schema =
             Schema::build(self.clone(), Operation::mutation_root(), EmptySubscription).finish();
-        let response = schema.execute(request).await;
-        Ok(response)
+        schema.execute(request).await
     }
 }
 
@@ -53,13 +50,4 @@ impl FungibleTokenService {
     async fn accounts(&self) -> &MapView<Owner, Amount> {
         &self.state.accounts
     }
-}
-
-/// An error that can occur while querying the service.
-#[derive(Debug, Error)]
-pub enum ServiceError {
-    /// Invalid query argument; could not deserialize request.
-    #[error("Invalid query argument; could not deserialize request")]
-    InvalidQuery(#[from] serde_json::Error),
-    // Add error variants here.
 }
