@@ -24,7 +24,7 @@ impl Contract for FungibleTokenContract {
     type Storage = ViewStateStorage<Self>;
     type State = FungibleToken;
     type Parameters = ();
-    type InitializationArgument = Amount;
+    type InstantiationArgument = Amount;
     type Message = Message;
 
     async fn new(state: FungibleToken, runtime: ContractRuntime<Self>) -> Self {
@@ -35,7 +35,7 @@ impl Contract for FungibleTokenContract {
         &mut self.state
     }
 
-    async fn initialize(&mut self, amount: Self::InitializationArgument) {
+    async fn instantiate(&mut self, amount: Self::InstantiationArgument) {
         // Validate that the application parameters were configured correctly.
         let _ = self.runtime.application_parameters();
 
