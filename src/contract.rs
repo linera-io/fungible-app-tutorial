@@ -28,6 +28,8 @@ impl Contract for FungibleTokenContract {
     type Error = Error;
     type Storage = ViewStateStorage<Self>;
     type State = FungibleToken;
+    type Parameters = ();
+    type InitializationArgument = Amount;
     type Message = Message;
 
     async fn new(

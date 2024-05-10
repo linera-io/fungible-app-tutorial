@@ -31,6 +31,7 @@ impl Service for FungibleTokenService {
     type Error = ServiceError;
     type Storage = ViewStateStorage<Self>;
     type State = FungibleToken;
+    type Parameters = ();
 
     async fn new(state: Self::State, runtime: ServiceRuntime<Self>) -> Result<Self, Self::Error> {
         Ok(FungibleTokenService {
