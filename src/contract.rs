@@ -101,9 +101,7 @@ pub mod tests {
     use linera_sdk::views::{View, ViewStorageContext};
     use std::str::FromStr;
 
-    use webassembly_test::webassembly_test;
-
-    #[webassembly_test]
+    #[test]
     pub fn init() {
         let initial_amount = Amount::from_str("50_000").unwrap();
         let fungible = create_and_init(initial_amount);
@@ -114,9 +112,12 @@ pub mod tests {
     }
 
     fn create_and_init(amount: Amount) -> FungibleToken {
-        linera_sdk::test::mock_key_value_store();
-        let store = ViewStorageContext::default();
-        let mut fungible_token = FungibleToken::load(store).now_or_never().unwrap().unwrap();
+        let runtime = ContractRuntime::new();
+        let context = ViewStorageContext::from(runtime.key_value_store());
+        let mut fungible_token = FungibleToken::load(context)
+            .now_or_never()
+            .unwrap()
+            .unwrap();
 
         fungible_token
             .initialize_accounts(creator(), amount)
