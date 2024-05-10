@@ -6,7 +6,8 @@ use self::state::FungibleToken;
 use fungible::{Account, Message, Operation};
 use linera_sdk::{
     base::{Amount, Owner, WithContractAbi},
-    Contract, ContractRuntime, ViewStateStorage,
+    views::{RootView, View, ViewStorageContext},
+    Contract, ContractRuntime,
 };
 
 linera_sdk::contract!(FungibleTokenContract);
@@ -21,18 +22,15 @@ pub struct FungibleTokenContract {
 }
 
 impl Contract for FungibleTokenContract {
-    type Storage = ViewStateStorage<Self>;
-    type State = FungibleToken;
     type Parameters = ();
     type InstantiationArgument = Amount;
     type Message = Message;
 
-    async fn new(state: FungibleToken, runtime: ContractRuntime<Self>) -> Self {
+    async fn new(runtime: ContractRuntime<Self>) -> Self {
+        let state = FungibleToken::load(ViewStorageContext::from(runtime.key_value_store()))
+            .await
+            .expect("Failed to load state");
         FungibleTokenContract { state, runtime }
-    }
-
-    fn state_mut(&mut self) -> &mut Self::State {
-        &mut self.state
     }
 
     async fn instantiate(&mut self, amount: Self::InstantiationArgument) {
@@ -63,6 +61,10 @@ impl Contract for FungibleTokenContract {
         match message {
             Message::Credit { amount, owner } => self.state.credit(owner, amount).await,
         }
+    }
+
+    async fn finalize(&mut self) {
+        self.state.save().await.expect("Failed to persist state");
     }
 }
 

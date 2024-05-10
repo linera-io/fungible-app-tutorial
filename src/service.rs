@@ -8,8 +8,8 @@ use fungible::Operation;
 use linera_sdk::{
     base::{Amount, Owner, WithServiceAbi},
     graphql::GraphQLMutationRoot,
-    views::MapView,
-    Service, ServiceRuntime, ViewStateStorage,
+    views::{MapView, View, ViewStorageContext},
+    Service, ServiceRuntime,
 };
 use std::sync::{Arc, Mutex};
 
@@ -27,11 +27,12 @@ impl WithServiceAbi for FungibleTokenService {
 }
 
 impl Service for FungibleTokenService {
-    type Storage = ViewStateStorage<Self>;
-    type State = FungibleToken;
     type Parameters = ();
 
-    async fn new(state: Self::State, runtime: ServiceRuntime<Self>) -> Self {
+    async fn new(runtime: ServiceRuntime<Self>) -> Self {
+        let state = FungibleToken::load(ViewStorageContext::from(runtime.key_value_store()))
+            .await
+            .expect("Failed to load state");
         FungibleTokenService {
             state: Arc::new(state),
             runtime: Arc::new(Mutex::new(runtime)),
