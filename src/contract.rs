@@ -3,12 +3,12 @@
 mod state;
 
 use self::state::FungibleToken;
+use crate::state::InsufficientBalanceError;
+use async_trait::async_trait;
 use fungible::{Account, Message, Operation};
-use linera_sdk::{
-    base::{Amount, Owner, WithContractAbi},
-    views::{RootView, View, ViewStorageContext},
-    Contract, ContractRuntime,
-};
+use linera_sdk::base::{Amount, Owner};
+use linera_sdk::{base::WithContractAbi, Contract, ContractRuntime, ViewStateStorage};
+use thiserror::Error;
 
 linera_sdk::contract!(FungibleTokenContract);
 
@@ -21,60 +21,73 @@ pub struct FungibleTokenContract {
     runtime: ContractRuntime<Self>,
 }
 
+#[async_trait]
 impl Contract for FungibleTokenContract {
-    type Parameters = ();
-    type InstantiationArgument = Amount;
+    type Error = Error;
+    type Storage = ViewStateStorage<Self>;
+    type State = FungibleToken;
     type Message = Message;
 
-    async fn load(runtime: ContractRuntime<Self>) -> Self {
-        let state = FungibleToken::load(ViewStorageContext::from(runtime.key_value_store()))
-            .await
-            .expect("Failed to load state");
-        FungibleTokenContract { state, runtime }
+    async fn new(
+        state: FungibleToken,
+        runtime: ContractRuntime<Self>,
+    ) -> Result<Self, Self::Error> {
+        Ok(FungibleTokenContract { state, runtime })
     }
 
-    async fn instantiate(&mut self, amount: Self::InstantiationArgument) {
+    fn state_mut(&mut self) -> &mut Self::State {
+        &mut self.state
+    }
+
+    async fn initialize(
+        &mut self,
+        amount: Self::InitializationArgument,
+    ) -> Result<(), Self::Error> {
         // Validate that the application parameters were configured correctly.
-        let () = self.runtime.application_parameters();
+        let _ = self.runtime.application_parameters();
 
         if let Some(owner) = self.runtime.authenticated_signer() {
             self.state.initialize_accounts(owner, amount).await;
         }
+        Ok(())
     }
 
-    async fn execute_operation(&mut self, operation: Self::Operation) -> Self::Response {
+    async fn execute_operation(
+        &mut self,
+        operation: Self::Operation,
+    ) -> Result<Self::Response, Self::Error> {
         match operation {
             Operation::Transfer {
                 owner,
                 amount,
                 target_account,
             } => {
-                self.check_account_authentication(owner);
-                self.state.debit(owner, amount).await;
+                self.check_account_authentication(owner)?;
+                self.state.debit(owner, amount).await?;
                 self.finish_transfer_to_account(amount, target_account)
                     .await;
+                Ok(())
             }
         }
     }
 
-    async fn execute_message(&mut self, message: Message) {
+    async fn execute_message(&mut self, message: Message) -> Result<(), Self::Error> {
         match message {
-            Message::Credit { amount, owner } => self.state.credit(owner, amount).await,
+            Message::Credit { amount, owner } => {
+                self.state.credit(owner, amount).await;
+                Ok(())
+            }
         }
-    }
-
-    async fn store(mut self) {
-        self.state.save().await.expect("Failed to persist state");
     }
 }
 
 impl FungibleTokenContract {
-    fn check_account_authentication(&mut self, owner: Owner) {
-        assert_eq!(
-            self.runtime.authenticated_signer(),
-            Some(owner),
-            "Incorrect authentication"
-        );
+    fn check_account_authentication(&mut self, owner: Owner) -> Result<(), Error> {
+        if self.runtime.authenticated_signer() == Some(owner) {
+            Ok(())
+        } else {
+            Err(Error::IncorrectAuthentication)
+        }
     }
 
     async fn finish_transfer_to_account(&mut self, amount: Amount, account: Account) {
@@ -93,6 +106,24 @@ impl FungibleTokenContract {
     }
 }
 
+/// An error that can occur during the contract execution.
+#[derive(Debug, Error)]
+pub enum Error {
+    /// Failed to deserialize BCS bytes
+    #[error("Failed to deserialize BCS bytes")]
+    BcsError(#[from] bcs::Error),
+
+    /// Failed to deserialize JSON string
+    #[error("Failed to deserialize JSON string")]
+    JsonError(#[from] serde_json::Error),
+
+    #[error("Incorrect Authentication")]
+    IncorrectAuthentication,
+
+    #[error("Insufficient Balance")]
+    InsufficientBalance(#[from] InsufficientBalanceError),
+}
+
 #[cfg(test)]
 #[cfg(target_arch = "wasm32")]
 pub mod tests {
@@ -101,7 +132,9 @@ pub mod tests {
     use linera_sdk::views::{View, ViewStorageContext};
     use std::str::FromStr;
 
-    #[test]
+    use webassembly_test::webassembly_test;
+
+    #[webassembly_test]
     pub fn init() {
         let initial_amount = Amount::from_str("50_000").unwrap();
         let fungible = create_and_init(initial_amount);
@@ -112,12 +145,9 @@ pub mod tests {
     }
 
     fn create_and_init(amount: Amount) -> FungibleToken {
-        let runtime = ContractRuntime::new();
-        let context = ViewStorageContext::from(runtime.key_value_store());
-        let mut fungible_token = FungibleToken::load(context)
-            .now_or_never()
-            .unwrap()
-            .unwrap();
+        linera_sdk::test::mock_key_value_store();
+        let store = ViewStorageContext::default();
+        let mut fungible_token = FungibleToken::load(store).now_or_never().unwrap().unwrap();
 
         fungible_token
             .initialize_accounts(creator(), amount)
