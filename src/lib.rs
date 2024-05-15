@@ -1,18 +1,19 @@
 use async_graphql::{InputObject, Request, Response};
-use linera_sdk::{
-    base::{Amount, ChainId, ContractAbi, Owner, ServiceAbi},
-    graphql::GraphQLMutationRoot,
-};
+use linera_sdk::base::{Amount, ChainId, ContractAbi, Owner, ServiceAbi};
+use linera_sdk::graphql::GraphQLMutationRoot;
 use serde::{Deserialize, Serialize};
 
 pub struct FungibleAbi;
 
 impl ContractAbi for FungibleAbi {
+    type Parameters = ();
+    type InitializationArgument = Amount;
     type Operation = Operation;
     type Response = ();
 }
 
 impl ServiceAbi for FungibleAbi {
+    type Parameters = ();
     type Query = Request;
     type QueryResponse = Response;
 }

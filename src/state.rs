@@ -1,5 +1,6 @@
 use linera_sdk::base::{Amount, Owner};
 use linera_sdk::views::{linera_views, MapView, RootView, ViewStorageContext};
+use thiserror::Error;
 
 #[derive(RootView)]
 #[view(context = "ViewStorageContext")]
@@ -33,14 +34,23 @@ impl FungibleToken {
             .expect("Failed to insert")
     }
 
-    pub async fn debit(&mut self, account: Owner, amount: Amount) {
+    pub async fn debit(
+        &mut self,
+        account: Owner,
+        amount: Amount,
+    ) -> Result<(), InsufficientBalanceError> {
         log::info!("Owner {account} was debited {amount} tokens");
         let mut balance = self.balance(&account).await;
         balance
             .try_sub_assign(amount)
-            .expect("Insufficient balance for transfer");
+            .map_err(|_| InsufficientBalanceError)?;
         self.accounts
             .insert(&account, balance)
             .expect("Failed to insert");
+        Ok(())
     }
 }
+
+#[derive(Clone, Copy, Debug, Error)]
+#[error("Insufficient balance for transfer")]
+pub struct InsufficientBalanceError;
